@@ -273,10 +273,5 @@ public class SelfRunReportApiResource {
       return delegate.relativize(uri);
     }
 
-    /** Required by Jakarta REST {@link UriInfo}; return type is String. */
-    @Override
-    public String getMatchedResourceTemplate() {
-      return delegate.getMatchedResourceTemplate();
-    }
   }
 }

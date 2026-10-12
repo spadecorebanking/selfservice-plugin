@@ -264,10 +264,7 @@ public class SelfServiceSecurityConfiguration {
     return entryPoint;
   }
 
-  /**
-   * Spring Security 7: DaoAuthenticationProvider no longer has a no-arg constructor. UserDetailsService
-   * must be supplied via the constructor; setUserDetailsService(...) was removed.
-   */
+  /** Creates a provider explicitly bound to self-service user details. */
   @Bean(name = "selfServiceAuthenticationProvider")
   public DaoAuthenticationProvider selfServiceAuthProvider() {
     DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);

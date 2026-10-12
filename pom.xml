@@ -12,7 +12,8 @@
     <parent>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-parent</artifactId>
-            <version>4.1.1</version>
+            <!-- Match the Spring Boot 3 runtime used by Apache Fineract. -->
+            <version>3.5.13</version>
             <relativePath/> <!-- lookup parent from repository -->
     </parent>
   <groupId>community.mifos</groupId>
@@ -25,7 +26,9 @@
     <java.version>25</java.version>
     <fineract.version>0.0.1556-391c415</fineract.version>
     <mifos.version>1.16.0-SNAPSHOT</mifos.version>
-    <eclipselink.version>5.0.1</eclipselink.version>
+    <!-- Fineract and Boot 3 use Jakarta Persistence 3.1; EclipseLink 5 requires 3.2. -->
+    <eclipselink.version>4.0.9</eclipselink.version>
+    <jackson3.version>3.1.5</jackson3.version>
     <truth.version>1.4.5</truth.version>    
     <spotless.version>3.10.2</spotless.version>
     <swagger.version>2.2.48</swagger.version>
@@ -118,11 +121,6 @@
       </exclusions>
     </dependency>
     <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-webmvc-test</artifactId>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>jakarta.ws.rs</groupId>
       <artifactId>jakarta.ws.rs-api</artifactId>
       <scope>compile</scope>
@@ -130,6 +128,8 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
+      <!-- Match the Commons Lang API used by the Fineract runtime. -->
+      <version>3.20.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -191,6 +191,18 @@
           <artifactId>commons-logging</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <!-- savings-plugin's KYC service uses Jackson 3 alongside Boot 3's Jackson 2. -->
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson3.version}</version>
+    </dependency>
+    <!-- Shared annotations must support Jackson 3 as well as Jackson 2. -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.21</version>
     </dependency>
     <!-- Mifos Library -->
     <dependency>
@@ -571,7 +583,8 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <includeGroupIds>community.mifos</includeGroupIds>
+              <!-- Launch integration Fineract with this build's runtime, not a moving image classpath. -->
+              <includeScope>runtime</includeScope>
               <outputDirectory>${project.build.directory}/test-plugins</outputDirectory>
               <overWriteReleases>false</overWriteReleases>
               <overWriteSnapshots>false</overWriteSnapshots>
@@ -586,6 +599,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <skipTests>${surefire.skip}</skipTests>
           <argLine>@{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar -Xshare:off</argLine>
           <includes>
             <include>**/*Test.java</include>
@@ -607,6 +621,7 @@
           </includes>
           <systemPropertyVariables>
             <project.build.directory>${project.build.directory}</project.build.directory>
+            <selfservice.it.plugin-jar>${project.build.directory}/${project.build.finalName}.jar</selfservice.it.plugin-jar>
             <spring.profiles.active>integration-test</spring.profiles.active>
           </systemPropertyVariables>
         </configuration>

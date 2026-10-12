@@ -25,6 +25,24 @@ Tier 1 │ *Test.java             │ Mockito unit tests                        
 ./mvnw verify -Dspotless.check.skip=true
 ```
 
+## Integration runtime
+
+Container tests use `eclipse-temurin:25-jre` as the Java runtime. Maven copies
+runtime dependencies (including the selected Fineract provider and savings plugin)
+into `target/test-plugins` during `pre-integration-test`. The container launches
+those JARs together with the plugin built by the current checkout; it does not
+use libraries from a moving `apache/fineract:develop` image.
+
+Failsafe passes the packaged artifact path through `selfservice.it.plugin-jar`,
+derived from Maven's `project.build.finalName`. Missing artifacts fail before
+container startup, and startup also checks that self-service migrations created
+`m_appselfservice_user`. Run through `./mvnw verify` so packaging and runtime
+assembly happen before the integration tests.
+
+To use another Java 25 runtime image, set `FINERACT_IT_IMAGE` or pass
+`-Dfineract.it.image=...`. This changes only the container runtime; application
+libraries still come from Maven.
+
 ## Coverage
 
 JaCoCo measures both unit and integration test coverage and merges them before enforcing thresholds.

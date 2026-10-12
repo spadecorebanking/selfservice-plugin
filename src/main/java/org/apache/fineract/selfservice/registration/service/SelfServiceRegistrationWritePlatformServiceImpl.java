@@ -246,7 +246,7 @@ public class SelfServiceRegistrationWritePlatformServiceImpl
         .notExceedingLengthOf(100);
 
     boolean isEmailAuthenticationMode =
-        authenticationMode.equalsIgnoreCase(SelfServiceApiConstants.emailModeParamName);
+        SelfServiceApiConstants.emailModeParamName.equalsIgnoreCase(authenticationMode);
 
     String mobileNumber = null;
     if (!isEmailAuthenticationMode) {
@@ -257,8 +257,10 @@ public class SelfServiceRegistrationWritePlatformServiceImpl
           .reset()
           .parameter(SelfServiceApiConstants.mobileNumberParamName)
           .value(mobileNumber)
-          .notNull()
-          .validatePhoneNumber();
+          .notNull();
+      if (mobileNumber != null) {
+        baseDataValidator.validatePhoneNumber();
+      }
     }
     validateForDuplicateUsername(username);
 

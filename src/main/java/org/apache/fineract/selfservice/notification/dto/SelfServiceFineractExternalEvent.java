@@ -7,7 +7,7 @@
 package org.apache.fineract.selfservice.notification.dto;
 
 import lombok.Data;
-import tools.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Data
 public class SelfServiceFineractExternalEvent {

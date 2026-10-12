@@ -26,9 +26,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 /**
  * Client for interacting with the external KINDO / PUC API.
@@ -51,8 +51,7 @@ public class PucExternalApiClient {
 
     // ObjectMapper configurado para ignorar campos nulos al serializar hacia KINDO/PUC
     private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
-        .changeDefaultPropertyInclusion(incl -> 
-                incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+        .serializationInclusion(JsonInclude.Include.NON_NULL)
         .build();
 
     /**

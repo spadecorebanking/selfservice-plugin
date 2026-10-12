@@ -6,6 +6,7 @@
  */
 package org.apache.fineract.selfservice.testing.support;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,9 @@ public abstract class SelfServiceIntegrationTestBase {
   protected static final GenericContainer<?> fineract;
 
   static {
+    final Path pluginJar =
+        SelfServiceIntegrationArtifacts.requirePluginJar(
+            System.getProperty("selfservice.it.plugin-jar"));
     postgres.start();
 
     try {
@@ -48,13 +52,12 @@ public abstract class SelfServiceIntegrationTestBase {
 
     final String fromEnv = System.getenv("FINERACT_IT_IMAGE");
     final String fromProperty = System.getProperty("fineract.it.image");
-    final String defaultImage = "apache/fineract:develop";
+    final String defaultImage = "eclipse-temurin:25-jre";
     final String fineractImage =
         fromProperty != null && !fromProperty.isBlank()
             ? fromProperty
             : (fromEnv != null && !fromEnv.isBlank() ? fromEnv : defaultImage);
-    final DockerImageName dockerImageName =
-        DockerImageName.parse(fineractImage).asCompatibleSubstituteFor("apache/fineract");
+    final DockerImageName dockerImageName = DockerImageName.parse(fineractImage);
 
     String buildDir = System.getProperty("project.build.directory", "target");
     String testPluginsPath = buildDir + "/test-plugins";
@@ -87,7 +90,7 @@ public abstract class SelfServiceIntegrationTestBase {
             .withEnv("FINERACT_SERVER_SSL_ENABLED", "true")
             .withEnv("FINERACT_SERVER_PORT", "8443")
             .withCopyFileToContainer(
-                MountableFile.forHostPath(buildDir + "/selfservice-plugin-1.15.0-SNAPSHOT.jar"),
+                MountableFile.forHostPath(pluginJar),
                 "/app/plugins/selfservice-plugin.jar")
             .withCopyFileToContainer(
                 MountableFile.forHostPath(testPluginsPath + "/"), "/app/test-plugins/")
@@ -96,10 +99,9 @@ public abstract class SelfServiceIntegrationTestBase {
                   cmd.withEntrypoint(
                       "sh",
                       "-c",
-                      "CLASSPATH=$(cat /app/jib-classpath-file) && "
-                          + "exec java $JAVA_TOOL_OPTIONS "
+                      "exec java $JAVA_TOOL_OPTIONS "
                           + "-Duser.home=/tmp -Dfile.encoding=UTF-8 -Duser.timezone=UTC -Djava.security.egd=file:/dev/./urandom "
-                          + "-cp /app/plugins/selfservice-plugin.jar:/app/test-plugins/*:$CLASSPATH "
+                          + "-cp /app/plugins/selfservice-plugin.jar:/app/test-plugins/* "
                           + "org.apache.fineract.ServerApplication");
                   cmd.withCmd();
                 })
@@ -112,6 +114,12 @@ public abstract class SelfServiceIntegrationTestBase {
 
     try {
       fineract.start();
+      String selfServiceTable =
+          querySingleValueInPostgres("SELECT to_regclass('public.m_appselfservice_user')");
+      if (selfServiceTable.isBlank()) {
+        throw new IllegalStateException(
+            "Fineract started without the self-service schema. Check plugin loading and migrations.");
+      }
     } catch (Exception e) {
       String containerLogs = "";
       try {

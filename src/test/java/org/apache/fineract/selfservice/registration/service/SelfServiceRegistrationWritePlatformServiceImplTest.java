@@ -140,12 +140,6 @@ class SelfServiceRegistrationWritePlatformServiceImplTest {
             fromApiJsonHelper.extractStringNamed(
                 eq(SelfServiceApiConstants.accountNumberParamName), any()))
         .thenReturn(null);
-    org.mockito.Mockito.lenient()
-        .when(
-            fromApiJsonHelper.extractStringNamed(
-                eq(SelfServiceApiConstants.authenticationModeParamName), any()))
-        .thenReturn("email");
-
     PasswordValidationPolicy policy = mock(PasswordValidationPolicy.class);
     when(passwordValidationPolicyRepository.findActivePasswordValidationPolicy())
         .thenReturn(policy);
